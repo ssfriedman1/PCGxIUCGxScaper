@@ -39,11 +39,7 @@ client = Socrata("data.ny.gov", None)
 date_apply = date.today() - timedelta(days = 1) 
 results = client.get("t5r8-ymc5", limit=10000)
 ny_liquor_df = pd.DataFrame.from_records(results)
-# dt = datetime.now()
-# if dt == 0:
-#     date_apply = date.today() - timedelta(days=3)
 ny_liquor_df['received_date'] = pd.to_datetime(ny_liquor_df['received_date']).dt.date
-# filtered_ny_liquor_df = ny_liquor_df.loc[ny_liquor_df['received_date'] > date_apply]
 filtered_ny_liquor_df = ny_liquor_df.loc[ny_liquor_df['received_date'] == date_apply]
 filtered_ny_liquor_df['Company'] = filtered_ny_liquor_df.apply(lambda row: row['premise_name'] if pd.isna(row["premise_name2"]) else row["premise_name2"], axis=1)
 i = 1
@@ -81,7 +77,6 @@ fl_liquor_df
 # %%
 client = Socrata("data.texas.gov", None)
 date_apply_tx = date.today() - timedelta(days =1) 
-# results_tx = client.get("7hf9-qc9f", limit=100000)
 results_tx = client.get('mxm5-tdpj', limit = 2000)
 texas_df = pd.DataFrame.from_records(results_tx)
 
