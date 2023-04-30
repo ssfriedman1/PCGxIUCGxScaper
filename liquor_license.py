@@ -222,11 +222,6 @@ for index, row in combined_daily.iterrows():
     # add the phone number to the dataframe as a new column
     combined_daily.at[index, 'Phone'] = phone_number
 
-# display the updated dataframe
-combined_daily
-
-# %%
-combined_daily.head(30)
 
 # %%
 combined_total = pd.concat([combined_daily, filtered_arizona_df])
