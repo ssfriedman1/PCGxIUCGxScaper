@@ -26,12 +26,10 @@ import requests
 from collections import OrderedDict
 from datetime import date
 from datetime import timedelta
-from datetime import datetime
 # Packages for retrieving data from websites
 from sodapy import Socrata
 from bs4 import BeautifulSoup
 import openpyxl
-from lxml import html
 
 # %%
 client = Socrata("data.ny.gov", None)
@@ -52,7 +50,6 @@ filtered_ny_liquor_df['Company'] = filtered_ny_liquor_df.apply(lambda row: row['
 filtered_ny_liquor_df = filtered_ny_liquor_df.rename(columns={'premise_address': 'Address1', 'premise_addesc': 'Address2', 'premise_city':'City', 'premise_state': 'State', 'premise_zip':'Zip'})
 filtered_ny_liquor_df = filtered_ny_liquor_df.reindex(columns=['Company', 'Address1', 'Address2', 'City','State','Zip'])  
 filtered_ny_liquor_df = filtered_ny_liquor_df.reset_index(drop = True)
-filtered_ny_liquor_df
 
 # %%
 url = "http://www.myfloridalicense.com/dbpr/sto/file_download/extracts/daily.csv"
@@ -70,7 +67,6 @@ fl_liquor_df = fl_liquor_df.reset_index(drop=True)
 fl_liquor_df = fl_liquor_df.rename(columns={'Location_name': 'Company', 'location_address': 'Address1', 'state':'State', '6':'Zip'})
 fl_liquor_df = fl_liquor_df.reindex(columns=['Company', 'Address1', 'Address2', 'City','State','Zip'])
 fl_liquor_df['Zip'] = fl_liquor_df['Zip'].astype(int)
-fl_liquor_df
 
 # %%
 client = Socrata("data.texas.gov", None)
@@ -90,7 +86,6 @@ filtered_texas_df = filtered_texas_df.drop(['applicationid','country','license_t
 filtered_texas_df = filtered_texas_df.reset_index()
 filtered_texas_df = filtered_texas_df.rename(columns={'trade_name': 'Company', 'address': 'Address1', 'address_2':'Address2', 'city':'City', 'state':'State', 'zip':'Zip'})
 filtered_texas_df = filtered_texas_df.reindex(columns=['Company', 'Address1', 'Address2', 'City','State','Zip'])
-filtered_texas_df
 
 # %%
 url = "https://www.abc.ca.gov/licensing/licensing-reports/new-applications/"
@@ -100,31 +95,36 @@ header = {
 }
 # Once you have set the url, we can now use the requests library to get the content of the url's html page.
 html_page = requests.get(url)
-dfs = pd.read_html(html_page.text)
-ca_liquor_df = pd.DataFrame(dfs[0])
-ca_liquor_df[['Type', 'Dup']] = ca_liquor_df['Type| Dup'].str.split('|', 1, expand=True)
-ca_liquor_df = ca_liquor_df.drop('Type| Dup', axis = 1)
-ca_liquor_df['Type'] = ca_liquor_df['Type'].astype(int)
-ca_liquor_df = ca_liquor_df.loc[ca_liquor_df['Type'].isin([40, 41, 42, 47, 48, 61, 75])]
-ca_liquor_df = ca_liquor_df.drop(['License Number', 'County', 'Status','Expir. Date','Action','Conditions','Escrow','District Code','Geo Code','Type','Dup'],axis=1)
-ca_liquor_df['Primary Owner and Premises Addr.'] = ca_liquor_df['Primary Owner and Premises Addr.'].str.replace('DBA: ', '')
-ca_liquor_df['Zip Code'] = ca_liquor_df['Zip Code'].astype(str)
-ca_liquor_df['Primary Owner and Premises Addr.'] = ca_liquor_df['Primary Owner and Premises Addr.'].str.replace('\d+', ',', regex=True)
-ca_liquor_df['Company'] = ca_liquor_df['Primary Owner and Premises Addr.'].str.split(',',n= 1, expand = True)[0]
-ca_liquor_df['Company'] = ca_liquor_df['Company'].str.split(' ').apply(OrderedDict.fromkeys).str.join(' ')
-ca_liquor_df['Company'] = ca_liquor_df['Company'].str.replace('LLC', '')
-ca_liquor_df['Address1'] = ca_liquor_df['Prem Street'][~ca_liquor_df['Prem Street'].str.contains(',')]
+try:
+  dfs = pd.read_html(html_page.text)
 
-# split the 'Name_Location' column into two columns based on the first comma delimiter only for rows that contain a comma
-ca_liquor_df.loc[ca_liquor_df['Prem Street'].str.contains(','), 'Address1'] = ca_liquor_df['Prem Street'].str.split(',', n=1).str[0]
-ca_liquor_df.loc[ca_liquor_df['Prem Street'].str.contains(','), 'Address2'] = ca_liquor_df['Prem Street'].str.split(',', n=1).str[1]
-# ca_liquor_df['Address1', 'Address2'] = ca_liquor_df['Prem Street'].str.split(',',n= 2, expand = True)
-ca_liquor_df['State'] = 'CA'
-ca_liquor_df = ca_liquor_df.drop(['Mailing Addr.','Primary Owner and Premises Addr.','Prem Street','Mailing Street','Mailing City','Mailing Zip Code','Mailing State'], axis = 1)
-ca_liquor_df = ca_liquor_df.rename(columns={'Zip Code': 'Zip'})
-ca_liquor_df = ca_liquor_df.reindex(columns=['Company', 'Address1', 'Address2', 'City', 'State','Zip'])
-ca_liquor_df = ca_liquor_df.reset_index(drop = True)
-ca_liquor_df
+  ca_liquor_df = pd.DataFrame(dfs[0])
+  ca_liquor_df[['Type', 'Dup']] = ca_liquor_df['Type| Dup'].str.split('|', 1, expand=True)
+  ca_liquor_df = ca_liquor_df.drop('Type| Dup', axis = 1)
+  ca_liquor_df['Type'] = ca_liquor_df['Type'].astype(int)
+  ca_liquor_df = ca_liquor_df.loc[ca_liquor_df['Type'].isin([40, 41, 42, 47, 48, 61, 75])]
+  ca_liquor_df = ca_liquor_df.drop(['License Number', 'County', 'Status','Expir. Date','Action','Conditions','Escrow','District Code','Geo Code','Type','Dup'],axis=1)
+  ca_liquor_df['Primary Owner and Premises Addr.'] = ca_liquor_df['Primary Owner and Premises Addr.'].str.replace('DBA: ', '')
+  ca_liquor_df['Zip Code'] = ca_liquor_df['Zip Code'].astype(str)
+  ca_liquor_df['Primary Owner and Premises Addr.'] = ca_liquor_df['Primary Owner and Premises Addr.'].str.replace('\d+', ',', regex=True)
+  ca_liquor_df['Company'] = ca_liquor_df['Primary Owner and Premises Addr.'].str.split(',',n= 1, expand = True)[0]
+  ca_liquor_df['Company'] = ca_liquor_df['Company'].str.split(' ').apply(OrderedDict.fromkeys).str.join(' ')
+  ca_liquor_df['Company'] = ca_liquor_df['Company'].str.replace('LLC', '')
+  ca_liquor_df['Address1'] = ca_liquor_df['Prem Street'][~ca_liquor_df['Prem Street'].str.contains(',')]
+
+  # split the 'Name_Location' column into two columns based on the first comma delimiter only for rows that contain a comma
+  ca_liquor_df.loc[ca_liquor_df['Prem Street'].str.contains(','), 'Address1'] = ca_liquor_df['Prem Street'].str.split(',', n=1).str[0]
+  ca_liquor_df.loc[ca_liquor_df['Prem Street'].str.contains(','), 'Address2'] = ca_liquor_df['Prem Street'].str.split(',', n=1).str[1]
+  # ca_liquor_df['Address1', 'Address2'] = ca_liquor_df['Prem Street'].str.split(',',n= 2, expand = True)
+  ca_liquor_df['State'] = 'CA'
+  ca_liquor_df = ca_liquor_df.drop(['Mailing Addr.','Primary Owner and Premises Addr.','Prem Street','Mailing Street','Mailing City','Mailing Zip Code','Mailing State'], axis = 1)
+  ca_liquor_df = ca_liquor_df.rename(columns={'Zip Code': 'Zip'})
+  ca_liquor_df = ca_liquor_df.reindex(columns=['Company', 'Address1', 'Address2', 'City', 'State','Zip'])
+  ca_liquor_df = ca_liquor_df.reset_index(drop = True)
+
+except:
+  columns = ['Company', 'Address1', 'Address2', 'City', 'State', 'Zip']
+  ca_liquor_df = pd.DataFrame(columns=columns)
 
 
 # %%
@@ -171,20 +171,16 @@ while len(filtered_arizona_df) == 0:
   date_apply_az = date.today() - timedelta(days = i)
   filtered_arizona_df = arizona_df.loc[arizona_df['Accepted'] == date_apply_az]
   i +=1
-filtered_arizona_df = filtered_arizona_df.drop(['Type','County'], axis = 1)
+filtered_arizona_df = filtered_arizona_df.drop(['Type','County', 'Accepted'], axis = 1)
 filtered_arizona_df = filtered_arizona_df.reset_index(drop=True)
 filtered_arizona_df['State'] = 'AZ'
 filtered_arizona_df = filtered_arizona_df.rename(columns={'Business Name': 'Company', 'Business Address': 'Address1', 'Business Phone': 'Phone'})
-filtered_arizona_df = filtered_arizona_df.reindex(columns=['Company','Address1', 'Address2','City', 'State', 'Zip','Phone', 'Licensee First Name','Licensee Last Name','Accepted'])
+filtered_arizona_df = filtered_arizona_df.reindex(columns=['Company','Address1', 'Address2','City', 'State', 'Zip','Phone', 'Licensee First Name','Licensee Last Name'])
 filtered_arizona_df['Phone'] = filtered_arizona_df['Phone'].astype(str)
-filtered_arizona_df
 
 # %%
 combined_daily = pd.concat([filtered_ny_liquor_df, fl_liquor_df, filtered_texas_df, ca_liquor_df])
 combined_daily = combined_daily.reset_index(drop  = True)
-
-# %%
-combined_daily
 
 # %%
 for index, row in combined_daily.iterrows():
@@ -197,12 +193,9 @@ for index, row in combined_daily.iterrows():
     response = requests.get(url, headers=headers)
     soup = BeautifulSoup(response.text, "html.parser")
     
-    
     try: 
         result = soup.find("span", class_= 'mw31Ze')
         phone_number = result.text
-        print(phone_number)
-
 
     except:
         phone_number = ''
