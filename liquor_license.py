@@ -15,8 +15,9 @@
 # - Socrata: Retrieves and returns new businesses for NY only
 # 
 # __End Product__: The data passed onto salesforce will include the fields: business name, street address, town, state, and phone number if found
+# 
+# Final Copy
 
-# Final changes
 # %%
 # Basic packages needed for operating system functions and dataframe creation
 import os
@@ -32,8 +33,6 @@ from bs4 import BeautifulSoup
 import openpyxl
 from lxml import html
 
-
-
 # %%
 client = Socrata("data.ny.gov", None)
 date_apply = date.today() - timedelta(days = 1) 
@@ -41,16 +40,15 @@ results = client.get("t5r8-ymc5", limit=10000)
 ny_liquor_df = pd.DataFrame.from_records(results)
 ny_liquor_df['received_date'] = pd.to_datetime(ny_liquor_df['received_date']).dt.date
 filtered_ny_liquor_df = ny_liquor_df.loc[ny_liquor_df['received_date'] == date_apply]
-filtered_ny_liquor_df['Company'] = filtered_ny_liquor_df.apply(lambda row: row['premise_name'] if pd.isna(row["premise_name2"]) else row["premise_name2"], axis=1)
+filtered_ny_liquor_df = filtered_ny_liquor_df.loc[~((filtered_ny_liquor_df['lic_type'] == 'HL') | (filtered_ny_liquor_df['lic_type'] =='L') | (filtered_ny_liquor_df['lic_type'] =='AX'))]
+filtered_ny_liquor_df = filtered_ny_liquor_df.drop(['comments','premise_name','nv_serial_number','lic_type','lic_class','county_name','estimated_date_of_determination','zone'], axis = 1)
 i = 1
 while len(filtered_ny_liquor_df) == 0:
     date_apply = date.today() - timedelta(days = i)
     filtered_ny_liquor_df = ny_liquor_df.loc[ny_liquor_df['received_date'] == date_apply]
-    filtered_ny_liquor_df = filtered_ny_liquor_df.loc[~((filtered_ny_liquor_df['lic_type'] == 'HL') | (filtered_ny_liquor_df['lic_type'] =='L') | (filtered_ny_liquor_df['lic_type'] =='AX'))]
-    filtered_ny_liquor_df = filtered_ny_liquor_df.drop(['comments','premise_name','nv_serial_number','lic_type','lic_class','county_name','estimated_date_of_determination','zone'], axis = 1)
     i += 1
-filtered_ny_liquor_df = filtered_ny_liquor_df.loc[~((filtered_ny_liquor_df['lic_type'] == 'HL') | (filtered_ny_liquor_df['lic_type'] =='L') | (filtered_ny_liquor_df['lic_type'] =='AX'))]
-filtered_ny_liquor_df = filtered_ny_liquor_df.drop(['comments','premise_name','nv_serial_number','lic_type','lic_class','county_name','estimated_date_of_determination','zone'], axis = 1)
+# filtered_ny_liquor_df = filtered_ny_liquor_df.drop(['comments','premise_name','nv_serial_number','lic_type','lic_class','county_name','estimated_date_of_determination','zone'], axis = 1)
+filtered_ny_liquor_df['Company'] = filtered_ny_liquor_df.apply(lambda row: row['premise_name'] if pd.isna(row["premise_name2"]) else row["premise_name2"], axis=1)
 filtered_ny_liquor_df = filtered_ny_liquor_df.rename(columns={'premise_address': 'Address1', 'premise_addesc': 'Address2', 'premise_city':'City', 'premise_state': 'State', 'premise_zip':'Zip'})
 filtered_ny_liquor_df = filtered_ny_liquor_df.reindex(columns=['Company', 'Address1', 'Address2', 'City','State','Zip'])  
 filtered_ny_liquor_df = filtered_ny_liquor_df.reset_index(drop = True)
@@ -76,24 +74,21 @@ fl_liquor_df
 
 # %%
 client = Socrata("data.texas.gov", None)
-date_apply_tx = date.today() - timedelta(days =1) 
-results_tx = client.get('mxm5-tdpj', limit = 2000)
+date_apply_tx = date.today() - timedelta(days = 1) 
+# results_tx = client.get("7hf9-qc9f", limit=100000)
+results_tx = client.get('mxm5-tdpj', limit = 3000)
 texas_df = pd.DataFrame.from_records(results_tx)
-
 texas_df['submission_date'] = pd.to_datetime(texas_df['submission_date']).dt.date
 filtered_texas_df  = texas_df.loc[texas_df['submission_date'] == date_apply_tx]
-i = 0
+i = 1
 while len(filtered_texas_df) == 0:
     date_apply_tx = date.today() - timedelta(days = i)
     filtered_texas_df  = texas_df.loc[texas_df['submission_date'] == date_apply_tx]
-    filtered_texas_df = filtered_texas_df.loc[((filtered_texas_df['license_type'] == 'MB') | (filtered_texas_df['license_type'] == 'FB'))]
-    filtered_texas_df = filtered_texas_df.drop(['applicationid','country','license_type','applicationstatus','primary_license_id','gun_sign','master_file_id','county','wine_percent','subordinate_license_id'], axis = 1)
-    i +=1
+    i += 1
 filtered_texas_df = filtered_texas_df.loc[((filtered_texas_df['license_type'] == 'MB') | (filtered_texas_df['license_type'] == 'FB'))]
 filtered_texas_df = filtered_texas_df.drop(['applicationid','country','license_type','applicationstatus','primary_license_id','owner','gun_sign','master_file_id','county','wine_percent','subordinate_license_id'], axis = 1)
 filtered_texas_df = filtered_texas_df.reset_index()
 filtered_texas_df = filtered_texas_df.rename(columns={'trade_name': 'Company', 'address': 'Address1', 'address_2':'Address2', 'city':'City', 'state':'State', 'zip':'Zip'})
-
 filtered_texas_df = filtered_texas_df.reindex(columns=['Company', 'Address1', 'Address2', 'City','State','Zip'])
 filtered_texas_df
 
@@ -130,7 +125,6 @@ ca_liquor_df = ca_liquor_df.rename(columns={'Zip Code': 'Zip'})
 ca_liquor_df = ca_liquor_df.reindex(columns=['Company', 'Address1', 'Address2', 'City', 'State','Zip'])
 ca_liquor_df = ca_liquor_df.reset_index(drop = True)
 ca_liquor_df
-
 
 
 # %%
@@ -216,7 +210,6 @@ for index, row in combined_daily.iterrows():
 
     # add the phone number to the dataframe as a new column
     combined_daily.at[index, 'Phone'] = phone_number
-
 
 # %%
 combined_total = pd.concat([combined_daily, filtered_arizona_df])
