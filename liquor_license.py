@@ -39,7 +39,7 @@ ny_liquor_df = pd.DataFrame.from_records(results)
 ny_liquor_df['received_date'] = pd.to_datetime(ny_liquor_df['received_date']).dt.date
 filtered_ny_liquor_df = ny_liquor_df.loc[ny_liquor_df['received_date'] == date_apply]
 filtered_ny_liquor_df = filtered_ny_liquor_df.loc[~((filtered_ny_liquor_df['lic_type'] == 'HL') | (filtered_ny_liquor_df['lic_type'] =='L') | (filtered_ny_liquor_df['lic_type'] =='AX'))]
-filtered_ny_liquor_df = filtered_ny_liquor_df.drop(['comments','premise_name','nv_serial_number','lic_type','lic_class','county_name','estimated_date_of_determination','zone'], axis = 1)
+filtered_ny_liquor_df = filtered_ny_liquor_df.drop(['comments','nv_serial_number','lic_type','lic_class','county_name','estimated_date_of_determination','zone'], axis = 1)
 i = 1
 while len(filtered_ny_liquor_df) == 0:
     date_apply = date.today() - timedelta(days = i)
