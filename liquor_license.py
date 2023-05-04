@@ -76,12 +76,12 @@ try:
     fl_liquor_df = pd.read_csv('fldaily.csv', 
                                # Define column names for the DataFrame
                                names=['License_Code', 'County', '1', '2', '3', 'Location_name', 'Parent_name', 'location_address', '4', '5', 'City', 'State', '6', 'Date', '7', 'License_type', '8', '9'])
-    
     # Remove the local CSV file
     os.remove('fldaily.csv')
     # Filter the DataFrame to only include records with the License_Code 4006 and License_type 'Initial' or 'Address Change'
-    fl_liquor_df = fl_liquor_df[(fl_liquor_df['License_Code'] == 4006) & 
-                                (fl_liquor_df['License_type'].isin(['Initial', 'Address Change']))]
+    fl_liquor_df = fl_liquor_df.loc[fl_liquor_df['License_Code'] == 4006]
+    fl_liquor_df = fl_liquor_df[fl_liquor_df['License_type'].str.contains("Initial")|fl_liquor_df['License_type'].str.contains("Address Change")]
+
     # Drop unnecessary columns from the DataFrame
     fl_liquor_df = fl_liquor_df.drop(['License_Code', 'County', '1', '2', '3', 'Parent_name', '4', '5', '7', '8', '9', 'License_type', 'Date'], axis=1)
     # Rename columns in the DataFrame
@@ -121,7 +121,7 @@ while len(filtered_texas_df) == 0:
     filtered_texas_df  = texas_df.loc[texas_df['submission_date'] == date_apply_tx]
     i += 1
 # Filter the dataframe to include only rows with license types 'MB' or 'FB'
-filtered_texas_df = filtered_texas_df.loc[~filtered_texas_df['license_type'].isin(['MB', 'FB'])]
+filtered_texas_df = filtered_texas_df.loc[filtered_texas_df['license_type'].isin(['MB', 'FB'])]
 # Drop unwanted columns from the dataframe
 filtered_texas_df = filtered_texas_df.drop(['applicationid','country','license_type','applicationstatus','primary_license_id','owner','gun_sign','master_file_id','county','wine_percent','subordinate_license_id'], axis = 1)
 # Reset the index of the dataframe
@@ -157,7 +157,7 @@ try:
   ca_liquor_df['Company'] = ca_liquor_df['Company'].str.split(' ').apply(OrderedDict.fromkeys).str.join(' ')
   ca_liquor_df['Company'] = ca_liquor_df['Company'].str.replace('LLC', '')
   ca_liquor_df['Address1'] = ca_liquor_df['Prem Street'][~ca_liquor_df['Prem Street'].str.contains(',')]
-
+  
   # split the 'Name_Location' column into two columns based on the first comma delimiter only for rows that contain a comma
   ca_liquor_df.loc[ca_liquor_df['Prem Street'].str.contains(','), 'Address1'] = ca_liquor_df['Prem Street'].str.split(',', n=1).str[0]
   ca_liquor_df.loc[ca_liquor_df['Prem Street'].str.contains(','), 'Address2'] = ca_liquor_df['Prem Street'].str.split(',', n=1).str[1]
